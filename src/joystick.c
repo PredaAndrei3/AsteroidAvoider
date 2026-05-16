@@ -13,8 +13,7 @@ void joystick_init() {
 }
 
 float joystick_get_x() {
-    ADMUX &= ~(0x0F);
-    ADMUX |= (1 << MUX0);
+    ADMUX &= ~(0b00011111);
 
     ADCSRA |= (1 << ADSC);
     while (ADCSRA & (1 << ADSC));
@@ -28,8 +27,8 @@ float joystick_get_x() {
 }
 
 float joystick_get_y() {
-    ADMUX &= ~(0x0F);
-    ADMUX |= (1 << MUX1);
+    ADMUX &= ~(0b00011111);
+    ADMUX |= (1 << MUX0);
 
     ADCSRA |= (1 << ADSC);
     while (ADCSRA & (1 << ADSC));
