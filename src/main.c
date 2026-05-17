@@ -10,6 +10,7 @@
 #include "buzzer.h"
 #include "player.h"
 #include "asteroid.h"
+#include "asteroid_spawner.h"
 
 #define RESET_PIN 8
 #define DC_PIN 9
@@ -28,13 +29,12 @@ int main() {
 
     player_init();
 
-    srand(100);
+    srand(33);
 
     asteroid_t asteroids[5];
+    uint8_t no_asteroids = 0;
 
-    for (uint8_t i = 0; i < 5; i++) {
-        asteroid_init_random_offscreen(&asteroids[i]);
-    }
+    asteroid_spawner_init();
 
     ssd1306_fillScreen16(BACKGROUND_COLOR);
 
@@ -53,15 +53,24 @@ int main() {
         player_update_pos_joystick(delta_time);
         player_handle_collision_boudary();
 
-        for (uint8_t i = 0; i < 5; i++) {
+        asteroid_spawner_update(asteroids, &no_asteroids);
+
+        for (uint8_t i = 0; i < no_asteroids; i++) {
             asteroid_update_pos(&asteroids[i], delta_time);
-            asteroid_handle_collision_boundary_temp(&asteroids[i]);
         }
 
         player_draw_diff();
 
-        for (uint8_t i = 0; i < 5; i++) {
+        for (uint8_t i = 0; i < no_asteroids; i++) {
             asteroid_draw_diff(&asteroids[i]);
+
+            if (asteroid_can_be_destroyed(&asteroids[i])) {
+                memcpy(&asteroids[i], &asteroids[no_asteroids - 1], sizeof(asteroid_t));
+                no_asteroids--;
+
+                i--;
+                continue;
+            }
         }
     }
 

@@ -11,11 +11,6 @@
 
 #define ASTEROID_COLOR RGB_COLOR16(176, 164, 148)
 
-#define MIN_SPEED 20
-#define MAX_SPEED 100
-
-#define TOLERANCE 15
-
 static const int16_t circle_heights_lookup_radius_7[] PROGMEM = {
     7, 7, 7, 6, 6, 6, 5, 4, 0
 };
@@ -28,71 +23,26 @@ static const int16_t circle_heights_lookup_radius_15[] PROGMEM = {
     15, 15, 15, 15, 14, 14, 14, 13, 13, 12, 11, 10, 9, 7, 5, 0
 };
 
-static int random_range(int a, int b) {
-    return rand() % (b - a + 1) + a;
-}
-
-void asteroid_init_random_offscreen(asteroid_t *asteroid) {
-    asteroid->radius = 7 + 4 * random_range(0, 2);
-
-    bool spawn_from_sides = random_range(0, 1);
-
-    if (spawn_from_sides) {
-        asteroid->y = random_range(UI_HEIGHT - asteroid->radius - 1, SCREEN_HEIGHT - 1 + asteroid->radius + 1);
-
-        bool left = random_range(0, 1);
-        if (left) {
-            asteroid->x = -asteroid->radius - 1;
-        } else {
-            asteroid->x = SCREEN_WIDTH - 1 + asteroid->radius + 1;
-        }
-    } else {
-        asteroid->x = random_range(-asteroid->radius - 1, SCREEN_WIDTH - 1 + asteroid->radius + 1);
-
-        bool up = random_range(0, 1);
-        if (up) {
-            asteroid->y = UI_HEIGHT - asteroid->radius - 1;
-        } else {
-            asteroid->y = SCREEN_HEIGHT - 1 + asteroid->radius + 1;
-        }
+bool asteroid_can_be_destroyed(asteroid_t *asteroid) {
+    if (asteroid->just_spawned_offscreen) {
+        return false;
     }
 
-    asteroid->old_x_draw = round(asteroid->x);
-	asteroid->old_y_draw = round(asteroid->y);
+    if (asteroid->x < -asteroid->radius - 1 || asteroid->x > SCREEN_WIDTH + asteroid->radius ||
+        asteroid->y < UI_HEIGHT - asteroid->radius - 1 || asteroid->y > SCREEN_HEIGHT + asteroid->radius) {
+        return true;
+    }
 
-    float speed = random_range(MIN_SPEED, MAX_SPEED);
-
-    int16_t padding = 2 * asteroid->radius + 1 + TOLERANCE;
-
-    int16_t x = random_range(padding, SCREEN_WIDTH - 1 - padding);
-    int16_t y = random_range(padding, SCREEN_HEIGHT - 1 - padding);
-
-    float distance = hypot(x - asteroid->x, y - asteroid->y);
-
-    asteroid->x_speed = speed * (x - asteroid->x) / distance;
-    asteroid->y_speed = speed * (y - asteroid->y) / distance;
+    return false;
 }
 
 void asteroid_update_pos(asteroid_t *asteroid, float delta_time) {
     asteroid->x += asteroid->x_speed * delta_time;
     asteroid->y += asteroid->y_speed * delta_time;
-}
 
-void asteroid_handle_collision_boundary_temp(asteroid_t *asteroid) {
-    if (asteroid->x < asteroid->radius) {
-        asteroid->x = asteroid->radius;
-        asteroid->x_speed = -asteroid->x_speed;
-    } else if (asteroid->x > SCREEN_WIDTH - 1 - asteroid->radius) {
-        asteroid->x = SCREEN_WIDTH - 1 - asteroid->radius;
-        asteroid->x_speed = -asteroid->x_speed;
-    }
-
-    if (asteroid->y < UI_HEIGHT + asteroid->radius) {
-        asteroid->y = UI_HEIGHT + asteroid->radius;
-        asteroid->y_speed = -asteroid->y_speed;
-    } else if (asteroid->y > SCREEN_HEIGHT - 1 - asteroid->radius) {
-        asteroid->y = SCREEN_HEIGHT - 1 - asteroid->radius;
-        asteroid->y_speed = -asteroid->y_speed;
+    if (-asteroid->radius <= asteroid->x && asteroid->x <= SCREEN_WIDTH + asteroid->radius &&
+        UI_HEIGHT - asteroid->radius <= asteroid->y && asteroid->y <= SCREEN_HEIGHT + asteroid->radius) {
+        asteroid->just_spawned_offscreen = false;
     }
 }
 
