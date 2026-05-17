@@ -23,6 +23,8 @@ int main() {
     buzzer_init();
     sei();
 
+    buzzer_set_frequency(130);
+
     ili9341_240x320_spi_init(RESET_PIN, CS_PIN, DC_PIN);
     ili9341_setRotation(3);
     ssd1306_setMode(LCD_MODE_NORMAL);
@@ -42,17 +44,27 @@ int main() {
     player_draw_init();
 
     uint32_t old_ms_value = systime_get_ms();
+    uint32_t buzzer_ms_reference;
 
     while (1) {
         uint32_t ms_value = systime_get_ms();
         float delta_time = (ms_value - old_ms_value) / 1000.0f;
         old_ms_value = ms_value;
 
+        if (systime_get_ms() - buzzer_ms_reference > 200) {
+            buzzer_set_playing(false);
+        }
+
         player_update_pos(delta_time);
         player_ckeck_update_invincibility();
 
         player_handle_collision_boudary();
-        player_handle_collision_asteroids(asteroids, no_asteroids);
+        bool damaged = player_handle_collision_asteroids(asteroids, no_asteroids);
+
+        if (damaged) {
+            buzzer_set_playing(true);
+            buzzer_ms_reference = systime_get_ms();
+        }
 
         asteroid_spawner_update(asteroids, &no_asteroids);
 

@@ -111,7 +111,9 @@ void player_handle_collision_boudary() {
 	}
 }
 
-void player_handle_collision_asteroids(asteroid_t *asteroids, uint8_t no_asteroids) {
+bool player_handle_collision_asteroids(asteroid_t *asteroids, uint8_t no_asteroids) {
+	bool damaged = false;
+
 	for (uint8_t i = 0; i < no_asteroids; i++) {
 		asteroid_t *asteroid = &asteroids[i];
 
@@ -151,8 +153,12 @@ void player_handle_collision_asteroids(asteroid_t *asteroids, uint8_t no_asteroi
 			} else {
 				rgb_led_set_state(OFF);
 			}
+
+			damaged = true;
 		}
 	}
+
+	return damaged;
 }
 
 void player_draw_init() {
