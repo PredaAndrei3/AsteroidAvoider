@@ -7,12 +7,14 @@
 
 #include "utils.h"
 
+#include "systime.h"
 #include "rgb_led.h"
 #include "joystick.h"
 
 player_t player;
 
 #define NO_PIXEL 0x6510 
+#define PLAYER_COLLISION_RADIUS 13
 
 static const uint16_t spaceship_bitmap[] PROGMEM = {
 	0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x2a9f, 0x6510, 0x6510, 0x6510, 0x6510, 
@@ -56,16 +58,43 @@ void player_init() {
     player.x = (SCREEN_WIDTH - 1) / 2;
     player.y = (SCREEN_HEIGHT - 1) / 2;
 
+	player.x_speed_inertia = player.y_speed_inertia = 0;
+
 	player.old_x_draw = round(player.x - (SPACESHIP_WIDTH - 1) / 2);
 	player.old_y_draw = round(player.y - SPACESHIP_HEIGHT / 2);
 
     player.no_lives = 3;
     rgb_led_set_state(GREEN);
+
+	player.invincible = player.shield = false;
+	player.display = true;
 }
 
-void player_update_pos_joystick(float delta_time) {
-	player.x += joystick_get_x() * delta_time;
-    player.y += joystick_get_y() * delta_time;
+void player_update_pos(float delta_time) {
+	player.x_speed_inertia *= 0.9f; 
+	if (fabs(player.x_speed_inertia) < 0.1f) {
+		player.x_speed_inertia = 0;
+	}
+
+    player.y_speed_inertia *= 0.9f;
+	if (fabs(player.y_speed_inertia) < 0.1f) {
+		player.y_speed_inertia = 0;
+	}
+
+	player.x += (joystick_get_x() + player.x_speed_inertia) * delta_time;
+    player.y += (joystick_get_y() + player.y_speed_inertia) * delta_time;
+}
+
+void player_ckeck_update_invincibility() {
+	if (!player.invincible) {
+		return;
+	}
+
+	if (systime_get_ms() - player.invincible_ms_reference >= INVINCIBLE_MS && player.display) {
+		player.invincible = false;
+	}
+
+	player.display = !player.display;
 }
 
 void player_handle_collision_boudary() {
@@ -79,6 +108,50 @@ void player_handle_collision_boudary() {
 		player.y = SPACESHIP_HEIGHT / 2 + UI_HEIGHT;
 	} else if (player.y > SCREEN_HEIGHT - 1 - (SPACESHIP_HEIGHT - 1) / 2) {
 		player.y = SCREEN_HEIGHT - 1 - (SPACESHIP_HEIGHT - 1) / 2;
+	}
+}
+
+void player_handle_collision_asteroids(asteroid_t *asteroids, uint8_t no_asteroids) {
+	for (uint8_t i = 0; i < no_asteroids; i++) {
+		asteroid_t *asteroid = &asteroids[i];
+
+		float dx = player.x - asteroid->x;
+        float dy = player.y - asteroid->y;
+
+        float radius_sum = asteroid->radius + PLAYER_COLLISION_RADIUS;
+
+        if (dx * dx + dy * dy > radius_sum * radius_sum) {
+            continue;
+        }
+
+		float distance = hypot(dx, dy);
+		float speed = hypot(asteroid->x_speed, asteroid->y_speed);
+
+		float dot_product = (dx * asteroid->x_speed + dy * asteroid->y_speed) / (distance * speed);
+		if (dot_product < 0.7f) {
+			dot_product = 0.7f;
+		}
+
+		float radius2 = (float)asteroid->radius * (float)asteroid->radius;
+		float power = radius2 * speed * dot_product * 0.05f;
+
+		player.x_speed_inertia = dx / distance * power;
+		player.y_speed_inertia = dy / distance * power;
+
+		if (!player.invincible) {
+			player.invincible = true;
+			player.invincible_ms_reference = systime_get_ms();
+
+			player.no_lives--;
+
+			if (player.no_lives == 2) {
+				rgb_led_set_state(YELLOW);
+			} else if (player.no_lives == 1) {
+				rgb_led_set_state(BLINKING_RED);
+			} else {
+				rgb_led_set_state(OFF);
+			}
+		}
 	}
 }
 
@@ -125,6 +198,21 @@ void player_draw_diff() {
 
 			old_index++;
 		}
+	}
+
+	player.old_x_draw = x_draw;
+	player.old_y_draw = y_draw;
+}
+
+void player_draw_invincible() {
+	int16_t x_draw = round(player.x - (SPACESHIP_WIDTH - 1) / 2);
+	int16_t y_draw = round(player.y - SPACESHIP_HEIGHT / 2);
+
+	if (player.display) {
+		ssd1306_drawBitmap16(x_draw, y_draw, SPACESHIP_WIDTH, SPACESHIP_HEIGHT, (uint8_t*)spaceship_bitmap);
+	} else {
+		ssd1306_setColor(BACKGROUND_COLOR);
+		ssd1306_fillRect16(player.old_x_draw, player.old_y_draw, player.old_x_draw + SPACESHIP_WIDTH - 1, player.old_y_draw + SPACESHIP_HEIGHT - 1);
 	}
 
 	player.old_x_draw = x_draw;

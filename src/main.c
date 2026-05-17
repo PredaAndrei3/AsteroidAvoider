@@ -29,9 +29,7 @@ int main() {
 
     player_init();
 
-    srand(33);
-
-    asteroid_t asteroids[5];
+    asteroid_t asteroids[MAX_NO_ASTEROIDS];
     uint8_t no_asteroids = 0;
 
     asteroid_spawner_init();
@@ -50,16 +48,24 @@ int main() {
         float delta_time = (ms_value - old_ms_value) / 1000.0f;
         old_ms_value = ms_value;
 
-        player_update_pos_joystick(delta_time);
+        player_update_pos(delta_time);
+        player_ckeck_update_invincibility();
+
         player_handle_collision_boudary();
+        player_handle_collision_asteroids(asteroids, no_asteroids);
 
         asteroid_spawner_update(asteroids, &no_asteroids);
 
         for (uint8_t i = 0; i < no_asteroids; i++) {
             asteroid_update_pos(&asteroids[i], delta_time);
+            asteroid_handle_asteroid_collision(&asteroids[i], asteroids, no_asteroids);
         }
 
-        player_draw_diff();
+        if (player.invincible) {
+            player_draw_invincible();
+        } else {
+            player_draw_diff();
+        }
 
         for (uint8_t i = 0; i < no_asteroids; i++) {
             asteroid_draw_diff(&asteroids[i]);
