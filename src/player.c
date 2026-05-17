@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdbool.h>
 
-#include "defines.h"
+#include "utils.h"
 
 #include "rgb_led.h"
 #include "joystick.h"
@@ -113,7 +113,8 @@ void player_draw_diff() {
 				&& old_y >= y_draw && old_y < y_draw + SPACESHIP_HEIGHT) {
 				int16_t index = old_index - index_offset;
 
-				if (index >= 0 && index < 23 * 24 && pgm_read_word(&spaceship_bitmap[index]) != NO_PIXEL) {
+				if (index >= 0 && index < SPACESHIP_WIDTH * SPACESHIP_HEIGHT
+					&& pgm_read_word(&spaceship_bitmap[index]) != NO_PIXEL) {
 					intersection = true;
 				}
 			}

@@ -1,6 +1,6 @@
 #include "asteroid.h"
 
-#include "defines.h"
+#include "utils.h"
 #include <ssd1306.h>
 
 #include <stdlib.h>

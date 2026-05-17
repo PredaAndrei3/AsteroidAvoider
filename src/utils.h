@@ -7,3 +7,5 @@
 
 #define SPACESHIP_WIDTH 23
 #define SPACESHIP_HEIGHT 24
+
+int random_range(int a, int b) ;
