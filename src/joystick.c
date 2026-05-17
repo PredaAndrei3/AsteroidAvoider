@@ -2,6 +2,8 @@
 
 #include <avr/io.h>
 
+#define SW_DDR DDRD
+#define SW_PORT PORTD
 #define SW PD2
 
 #define MIDDLE_VAL 512
@@ -10,6 +12,12 @@
 void joystick_init() {
     ADMUX |= (1 << REFS0);
     ADCSRA |= (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+
+    SW_DDR &= ~(1 << SW);
+    SW_PORT |= (1 << SW);
+
+    EICRA |= (1 << ISC01);
+    EIMSK |= (1 << INT0);
 }
 
 float joystick_get_x() {

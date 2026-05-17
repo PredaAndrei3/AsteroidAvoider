@@ -16,6 +16,11 @@ player_t player;
 #define NO_PIXEL 0x6510 
 #define PLAYER_COLLISION_RADIUS 13
 
+#define INVINCIBLE_MS 1000
+#define SHIELD_MS 3000
+
+#define SHIELD_PADDING 4
+
 static const uint16_t spaceship_bitmap[] PROGMEM = {
 	0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x2a9f, 0x6510, 0x6510, 0x6510, 0x6510, 
 	0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 0x6510, 
@@ -66,7 +71,9 @@ void player_init() {
     player.no_lives = 3;
     rgb_led_set_state(GREEN);
 
-	player.invincible = player.shield = false;
+	player.no_shields = 3;
+
+	player.invincible = player.shield = player.old_shield = false;
 	player.display = true;
 }
 
@@ -97,17 +104,47 @@ void player_ckeck_update_invincibility() {
 	player.display = !player.display;
 }
 
-void player_handle_collision_boudary() {
-	if (player.x < (SPACESHIP_WIDTH - 1) / 2) {
-		player.x = (SPACESHIP_WIDTH - 1) / 2;
-	} else if (player.x > SCREEN_WIDTH - 1 - (SPACESHIP_WIDTH - 1) / 2) {
-		player.x = SCREEN_WIDTH - 1 - (SPACESHIP_WIDTH - 1) / 2;
+void player_check_update_shield() {
+	player.old_shield = player.shield;
+
+	if (player.shield_requested) {
+		player.shield_requested = false;
+
+		if (player.no_shields > 0 && !player.shield) {
+			player.no_shields--;
+			player.shield = true;
+			player.shield_ms_reference = systime_get_ms();
+		}
 	}
 
-	if (player.y < SPACESHIP_HEIGHT / 2 + UI_HEIGHT) {
-		player.y = SPACESHIP_HEIGHT / 2 + UI_HEIGHT;
-	} else if (player.y > SCREEN_HEIGHT - 1 - (SPACESHIP_HEIGHT - 1) / 2) {
-		player.y = SCREEN_HEIGHT - 1 - (SPACESHIP_HEIGHT - 1) / 2;
+	if (systime_get_ms() - player.shield_ms_reference >= SHIELD_MS) {
+		player.shield = false;
+	}
+}
+
+void player_handle_collision_boudary() {
+	float left = (SPACESHIP_WIDTH - 1) / 2;
+	float right = SCREEN_WIDTH - 1 - (SPACESHIP_WIDTH - 1) / 2;
+	float up = SPACESHIP_HEIGHT / 2 + UI_HEIGHT;
+	float down = SCREEN_HEIGHT - 1 - (SPACESHIP_HEIGHT - 1) / 2;
+
+	if (player.shield) {
+		left += SHIELD_PADDING;
+		right -= SHIELD_PADDING;
+		up += SHIELD_PADDING;
+		down -= SHIELD_PADDING;
+	}
+
+	if (player.x < left) {
+		player.x = left;
+	} else if (player.x > right) {
+		player.x = right;
+	}
+
+	if (player.y < up) {
+		player.y = up;
+	} else if (player.y > down) {
+		player.y = down;
 	}
 }
 
@@ -126,35 +163,45 @@ bool player_handle_collision_asteroids(asteroid_t *asteroids, uint8_t no_asteroi
             continue;
         }
 
-		float distance = hypot(dx, dy);
-		float speed = hypot(asteroid->x_speed, asteroid->y_speed);
+		if (player.shield) {
+			float shield_left = player.x - (SPACESHIP_WIDTH - 1) / 2 - SHIELD_PADDING;
+			float shield_right = player.x - (SPACESHIP_WIDTH - 1) / 2 + SPACESHIP_WIDTH - 1 + SHIELD_PADDING;
 
-		float dot_product = (dx * asteroid->x_speed + dy * asteroid->y_speed) / (distance * speed);
-		if (dot_product < 0.7f) {
-			dot_product = 0.7f;
-		}
+			float shield_up = player.y - SPACESHIP_HEIGHT / 2 - SHIELD_PADDING;
+			float shield_down = player.y - SPACESHIP_HEIGHT / 2 + SPACESHIP_HEIGHT - 1 + SHIELD_PADDING;
 
-		float radius2 = (float)asteroid->radius * (float)asteroid->radius;
-		float power = radius2 * speed * dot_product * 0.05f;
+			//TODO: Collision with square and circle
+		} else {
+			float distance = hypot(dx, dy);
+			float speed = hypot(asteroid->x_speed, asteroid->y_speed);
 
-		player.x_speed_inertia = dx / distance * power;
-		player.y_speed_inertia = dy / distance * power;
-
-		if (!player.invincible) {
-			player.invincible = true;
-			player.invincible_ms_reference = systime_get_ms();
-
-			player.no_lives--;
-
-			if (player.no_lives == 2) {
-				rgb_led_set_state(YELLOW);
-			} else if (player.no_lives == 1) {
-				rgb_led_set_state(BLINKING_RED);
-			} else {
-				rgb_led_set_state(OFF);
+			float dot_product = (dx * asteroid->x_speed + dy * asteroid->y_speed) / (distance * speed);
+			if (dot_product < 0.7f) {
+				dot_product = 0.7f;
 			}
 
-			damaged = true;
+			float radius2 = (float)asteroid->radius * (float)asteroid->radius;
+			float power = radius2 * speed * dot_product * 0.05f;
+
+			player.x_speed_inertia = dx / distance * power;
+			player.y_speed_inertia = dy / distance * power;
+
+			if (!player.invincible) {
+				player.invincible = true;
+				player.invincible_ms_reference = systime_get_ms();
+
+				player.no_lives--;
+
+				if (player.no_lives == 2) {
+					rgb_led_set_state(YELLOW);
+				} else if (player.no_lives == 1) {
+					rgb_led_set_state(BLINKING_RED);
+				} else {
+					rgb_led_set_state(OFF);
+				}
+
+				damaged = true;
+			}
 		}
 	}
 
@@ -165,9 +212,33 @@ void player_draw_init() {
 	ssd1306_drawBitmap16(player.old_x_draw, player.old_y_draw, 23, 24, (uint8_t*)spaceship_bitmap);
 }
 
+static void draw_shield(int16_t x_draw, int16_t y_draw) {
+	if (player.old_shield) {
+		ssd1306_setColor(BACKGROUND_COLOR);
+		ssd1306_drawRect16(
+			player.old_x_draw - SHIELD_PADDING,
+			player.old_y_draw - SHIELD_PADDING,
+			player.old_x_draw + SPACESHIP_WIDTH - 1 + SHIELD_PADDING,
+			player.old_y_draw + SPACESHIP_HEIGHT - 1 + SHIELD_PADDING
+		);
+	}
+
+	if (player.shield) {
+		ssd1306_setColor(RGB_COLOR16(103, 196, 231));
+		ssd1306_drawRect16(
+			x_draw - SHIELD_PADDING,
+			y_draw - SHIELD_PADDING,
+			x_draw + SPACESHIP_WIDTH - 1 + SHIELD_PADDING,
+			y_draw + SPACESHIP_HEIGHT - 1 + SHIELD_PADDING
+		);
+	}
+}
+
 void player_draw_diff() {
     int16_t x_draw = round(player.x - (SPACESHIP_WIDTH - 1) / 2);
 	int16_t y_draw = round(player.y - SPACESHIP_HEIGHT / 2);
+
+	draw_shield(x_draw, y_draw);
 
 	if (x_draw == player.old_x_draw && y_draw == player.old_y_draw) {
 		return;
@@ -213,6 +284,8 @@ void player_draw_diff() {
 void player_draw_invincible() {
 	int16_t x_draw = round(player.x - (SPACESHIP_WIDTH - 1) / 2);
 	int16_t y_draw = round(player.y - SPACESHIP_HEIGHT / 2);
+
+	draw_shield(x_draw, y_draw);
 
 	if (player.display) {
 		ssd1306_drawBitmap16(x_draw, y_draw, SPACESHIP_WIDTH, SPACESHIP_HEIGHT, (uint8_t*)spaceship_bitmap);

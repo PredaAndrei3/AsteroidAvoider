@@ -16,6 +16,10 @@
 #define DC_PIN 9
 #define CS_PIN 10
 
+ISR(INT0_vect) {
+    player.shield_requested = true;
+}
+
 int main() {
     joystick_init();
     systime_init();
@@ -57,6 +61,7 @@ int main() {
 
         player_update_pos(delta_time);
         player_ckeck_update_invincibility();
+        player_check_update_shield();
 
         player_handle_collision_boudary();
         bool damaged = player_handle_collision_asteroids(asteroids, no_asteroids);
