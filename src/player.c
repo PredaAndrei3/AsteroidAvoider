@@ -137,14 +137,18 @@ void player_handle_collision_boudary() {
 
 	if (player.x < left) {
 		player.x = left;
+		player.x_speed_inertia = 0;
 	} else if (player.x > right) {
 		player.x = right;
+		player.x_speed_inertia = 0;
 	}
 
 	if (player.y < up) {
 		player.y = up;
+		player.y_speed_inertia = 0;
 	} else if (player.y > down) {
 		player.y = down;
+		player.y_speed_inertia = 0;
 	}
 }
 
@@ -373,7 +377,12 @@ void player_draw_invincible() {
 		ssd1306_drawBitmap16(x_draw, y_draw, SPACESHIP_WIDTH, SPACESHIP_HEIGHT, (uint8_t*)spaceship_bitmap);
 	} else {
 		ssd1306_setColor(BACKGROUND_COLOR);
-		ssd1306_fillRect16(player.old_x_draw, player.old_y_draw, player.old_x_draw + SPACESHIP_WIDTH - 1, player.old_y_draw + SPACESHIP_HEIGHT - 1);
+		ssd1306_fillRect16(
+			player.old_x_draw,
+			player.old_y_draw,
+			player.old_x_draw + SPACESHIP_WIDTH - 1,
+			player.old_y_draw + SPACESHIP_HEIGHT - 1
+		);
 	}
 
 	player.old_x_draw = x_draw;
