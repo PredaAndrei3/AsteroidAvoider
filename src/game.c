@@ -35,27 +35,31 @@ void game_run() {
     uint32_t buzzer_ms_reference;
 
     bool game_over = false;
+    bool buzzer_playing = false;
 
     uint32_t time_survived_ms_reference = systime_get_ms();
 
     uint8_t i = 0;
 
     while (true) {
-        if (!game_over) {
-            if (systime_get_ms() - buzzer_ms_reference > 200) {
-                buzzer_set_playing(false);
-            }
-        } else {
-            if (systime_get_ms() - buzzer_ms_reference > game_over_durations[i] && i < GAME_OVER_NO_FREQUENCIES) {
-                i++;
-
-                if (i < GAME_OVER_NO_FREQUENCIES) {
-                    buzzer_set_frequency(game_over_frequencies[i]);
-                    buzzer_ms_reference = systime_get_ms();
-                } else {
+        if (buzzer_playing) {
+            if (!game_over) {
+                if (systime_get_ms() - buzzer_ms_reference > 200) {
                     buzzer_set_playing(false);
+                    buzzer_playing = false;
                 }
+            } else {
+                if (systime_get_ms() - buzzer_ms_reference > game_over_durations[i]) {
+                    i++;
 
+                    if (i < GAME_OVER_NO_FREQUENCIES) {
+                        buzzer_set_frequency(game_over_frequencies[i]);
+                        buzzer_ms_reference = systime_get_ms();
+                    } else {
+                        buzzer_set_playing(false);
+                        buzzer_playing = false;
+                    }
+                }
             }
         }
 
@@ -73,7 +77,10 @@ void game_run() {
             ssd1306_printFixed16(120, 130, time_text, STYLE_NORMAL);
 
             buzzer_set_frequency(game_over_frequencies[i]);
+
             buzzer_set_playing(true);
+            buzzer_playing = true;
+
             buzzer_ms_reference = systime_get_ms();
             
             game_over = true;
@@ -96,7 +103,10 @@ void game_run() {
 
         if (damaged && player.no_lives != 0) {
             buzzer_set_frequency(130);
+
             buzzer_set_playing(true);
+            buzzer_playing = true;
+
             buzzer_ms_reference = systime_get_ms();
         }
 

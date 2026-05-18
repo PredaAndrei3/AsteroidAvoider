@@ -117,7 +117,7 @@ void player_check_update_shield() {
 		}
 	}
 
-	if (systime_get_ms() - player.shield_ms_reference >= SHIELD_MS) {
+	if (player.shield && systime_get_ms() - player.shield_ms_reference >= SHIELD_MS) {
 		player.shield = false;
 	}
 }
