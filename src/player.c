@@ -275,6 +275,7 @@ bool player_handle_collision_asteroids(asteroid_t *asteroids, uint8_t no_asteroi
 			if (!player.invincible) {
 				player.invincible = true;
 				player.invincible_ms_reference = systime_get_ms();
+				player.display = false;
 
 				player.no_lives--;
 
