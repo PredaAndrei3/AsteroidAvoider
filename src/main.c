@@ -11,6 +11,7 @@
 #include "player.h"
 #include "asteroid.h"
 #include "asteroid_spawner.h"
+#include "ui_bar_manager.h"
 
 #define RESET_PIN 8
 #define DC_PIN 9
@@ -33,31 +34,42 @@ int main() {
     ili9341_setRotation(3);
     ssd1306_setMode(LCD_MODE_NORMAL);
 
+    ssd1306_setFixedFont(ssd1306xled_font8x16);
+    ssd1306_fillScreen16(BACKGROUND_COLOR);
+
     player_init();
+    ui_bar_manager_init();
+    asteroid_spawner_init();
+
+    player_draw_init();
+    ui_bar_draw_init();
 
     asteroid_t asteroids[MAX_NO_ASTEROIDS];
     uint8_t no_asteroids = 0;
 
-    asteroid_spawner_init();
-
-    ssd1306_fillScreen16(BACKGROUND_COLOR);
-
-    ssd1306_setColor(RGB_COLOR16(0, 0, 0));
-    ssd1306_fillRect16(0, 0, SCREEN_WIDTH - 1, 23);
-
-    player_draw_init();
-
     uint32_t old_ms_value = systime_get_ms();
     uint32_t buzzer_ms_reference;
 
-    while (1) {
-        uint32_t ms_value = systime_get_ms();
-        float delta_time = (ms_value - old_ms_value) / 1000.0f;
-        old_ms_value = ms_value;
+    bool game_over = false;
 
+    while (1) {
         if (systime_get_ms() - buzzer_ms_reference > 200) {
             buzzer_set_playing(false);
         }
+
+        if (player.no_lives == 0 && !game_over) {
+            ssd1306_setColor(RGB_COLOR16(255, 0, 0));
+            ssd1306_printFixed16(120, 100, "GAME OVER!", STYLE_NORMAL);
+            game_over = true;
+        }
+
+        if (game_over) {
+            continue;
+        }
+
+        uint32_t ms_value = systime_get_ms();
+        float delta_time = (ms_value - old_ms_value) / 1000.0f;
+        old_ms_value = ms_value;
 
         player_update_pos(delta_time);
         player_ckeck_update_invincibility();
@@ -95,6 +107,9 @@ int main() {
                 continue;
             }
         }
+
+        ui_bar_manager_update();
+        ui_bar_draw_diff();
     }
 
     return 0;

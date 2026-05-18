@@ -311,7 +311,7 @@ static void draw_shield(int16_t x_draw, int16_t y_draw) {
 	}
 
 	if (player.shield) {
-		ssd1306_setColor(RGB_COLOR16(103, 196, 231));
+		ssd1306_setColor(SHIELD_COLOR);
 		ssd1306_drawRect16(
 			x_draw - SHIELD_PADDING,
 			y_draw - SHIELD_PADDING,
