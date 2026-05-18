@@ -65,7 +65,7 @@ void game_run() {
         player_ckeck_update_invincibility();
         player_check_update_shield();
 
-        player_handle_collision_boudary();
+        player_handle_collision_boundary();
         bool damaged = player_handle_collision_asteroids(asteroids, no_asteroids);
 
         if (damaged) {

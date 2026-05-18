@@ -122,7 +122,7 @@ void player_check_update_shield() {
 	}
 }
 
-void player_handle_collision_boudary() {
+void player_handle_collision_boundary() {
 	float left = (SPACESHIP_WIDTH - 1) / 2;
 	float right = SCREEN_WIDTH - 1 - (SPACESHIP_WIDTH - 1) / 2;
 	float up = SPACESHIP_HEIGHT / 2 + UI_HEIGHT;

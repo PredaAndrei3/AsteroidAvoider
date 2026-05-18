@@ -22,7 +22,7 @@ void player_update_pos(float delta_time);
 void player_ckeck_update_invincibility();
 void player_check_update_shield();
 
-void player_handle_collision_boudary();
+void player_handle_collision_boundary();
 bool player_handle_collision_asteroids(asteroid_t *asteroids, uint8_t no_asteroids);
 
 void player_draw_init();
