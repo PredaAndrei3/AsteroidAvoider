@@ -15,6 +15,11 @@ ISR(INT0_vect) {
     player.shield_requested = true;
 }
 
+#define GAME_OVER_NO_FREQUENCIES 3
+
+uint16_t game_over_frequencies[] = {220, 164, 155};
+uint16_t game_over_durations[] = {250, 250, 600};
+
 void game_run() {
     player_init();
     ui_bar_manager_init();
@@ -33,9 +38,25 @@ void game_run() {
 
     uint32_t time_survived_ms_reference = systime_get_ms();
 
+    uint8_t i = 0;
+
     while (true) {
-        if (systime_get_ms() - buzzer_ms_reference > 200) {
-            buzzer_set_playing(false);
+        if (!game_over) {
+            if (systime_get_ms() - buzzer_ms_reference > 200) {
+                buzzer_set_playing(false);
+            }
+        } else {
+            if (systime_get_ms() - buzzer_ms_reference > game_over_durations[i] && i < GAME_OVER_NO_FREQUENCIES) {
+                i++;
+
+                if (i < GAME_OVER_NO_FREQUENCIES) {
+                    buzzer_set_frequency(game_over_frequencies[i]);
+                    buzzer_ms_reference = systime_get_ms();
+                } else {
+                    buzzer_set_playing(false);
+                }
+
+            }
         }
 
         if (player.no_lives == 0 && !game_over) {
@@ -50,6 +71,11 @@ void game_run() {
 
             ssd1306_setColor(RGB_COLOR16(255, 255, 255));
             ssd1306_printFixed16(120, 130, time_text, STYLE_NORMAL);
+
+            buzzer_set_frequency(game_over_frequencies[i]);
+            buzzer_set_playing(true);
+            buzzer_ms_reference = systime_get_ms();
+            
             game_over = true;
         }
 
@@ -68,7 +94,7 @@ void game_run() {
         player_handle_collision_boundary();
         bool damaged = player_handle_collision_asteroids(asteroids, no_asteroids);
 
-        if (damaged) {
+        if (damaged && player.no_lives != 0) {
             buzzer_set_frequency(130);
             buzzer_set_playing(true);
             buzzer_ms_reference = systime_get_ms();
