@@ -6,6 +6,7 @@
 #include <math.h>
 
 #define TOLERANCE 15
+#define UPDATE_MS 10000
 
 asteroid_spawner_t asteroid_spawner;
 
@@ -16,19 +17,36 @@ void asteroid_spawner_init() {
     asteroid_spawner.min_speed = 70;
     asteroid_spawner.max_speed = 100;
     
-    asteroid_spawner.radius7_weight = 10;
-    asteroid_spawner.radius11_weight = 7;
-    asteroid_spawner.radius15_weight = 3;
+    asteroid_spawner.radius7_weight = 100;
+    asteroid_spawner.radius11_weight = 70;
+    asteroid_spawner.radius15_weight = 30;
 
     int a = asteroid_spawner.average_waiting_time_ms - asteroid_spawner.deviation_waiting_time_ms;
     int b = asteroid_spawner.average_waiting_time_ms + asteroid_spawner.deviation_waiting_time_ms;
 
     asteroid_spawner.waiting_time_ms = random_range(a, b);
-    asteroid_spawner.ms_reference = systime_get_ms();
+    asteroid_spawner.waiting_time_ms_reference = systime_get_ms();
+
+    asteroid_spawner.update_ms_reference = systime_get_ms();
+    asteroid_spawner.no_updates = 20;
 }
 
 void asteroid_spawner_update(asteroid_t *asteroids, uint8_t *no_asteroids) {
-    if (systime_get_ms() - asteroid_spawner.ms_reference < asteroid_spawner.waiting_time_ms) {
+    if (asteroid_spawner.no_updates > 0 && systime_get_ms() - asteroid_spawner.update_ms_reference > UPDATE_MS) {
+        asteroid_spawner.average_waiting_time_ms -= 40;
+        asteroid_spawner.deviation_waiting_time_ms -= 10;
+
+        asteroid_spawner.min_speed += 2;
+        asteroid_spawner.max_speed += 5;
+
+        asteroid_spawner.radius7_weight -= 3;
+        asteroid_spawner.radius15_weight--;
+
+        asteroid_spawner.no_updates--;
+        asteroid_spawner.update_ms_reference = systime_get_ms();
+    }
+
+    if (systime_get_ms() - asteroid_spawner.waiting_time_ms_reference < asteroid_spawner.waiting_time_ms) {
         return;
     }
 
@@ -94,5 +112,5 @@ void asteroid_spawner_update(asteroid_t *asteroids, uint8_t *no_asteroids) {
     int b = asteroid_spawner.average_waiting_time_ms + asteroid_spawner.deviation_waiting_time_ms;
 
     asteroid_spawner.waiting_time_ms = random_range(a, b);
-    asteroid_spawner.ms_reference = systime_get_ms();
+    asteroid_spawner.waiting_time_ms_reference = systime_get_ms();
 }

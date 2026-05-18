@@ -17,7 +17,10 @@ typedef struct asteroid_spawner_t {
     uint8_t radius15_weight;
 
     uint32_t waiting_time_ms;
-    uint32_t ms_reference;
+    uint32_t waiting_time_ms_reference;
+
+    uint32_t update_ms_reference;
+    uint8_t no_updates;
 } asteroid_spawner_t;
 
 extern asteroid_spawner_t asteroid_spawner;
