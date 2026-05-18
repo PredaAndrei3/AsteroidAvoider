@@ -154,15 +154,6 @@ bool player_handle_collision_asteroids(asteroid_t *asteroids, uint8_t no_asteroi
 	for (uint8_t i = 0; i < no_asteroids; i++) {
 		asteroid_t *asteroid = &asteroids[i];
 
-		float dx = player.x - asteroid->x;
-        float dy = player.y - asteroid->y;
-
-        float radius_sum = asteroid->radius + PLAYER_COLLISION_RADIUS;
-
-        if (dx * dx + dy * dy > radius_sum * radius_sum) {
-            continue;
-        }
-
 		if (player.shield) {
 			float shield_left = player.x - (SPACESHIP_WIDTH - 1) / 2 - SHIELD_PADDING;
 			float shield_right = player.x - (SPACESHIP_WIDTH - 1) / 2 + SPACESHIP_WIDTH - 1 + SHIELD_PADDING;
@@ -170,8 +161,99 @@ bool player_handle_collision_asteroids(asteroid_t *asteroids, uint8_t no_asteroi
 			float shield_up = player.y - SPACESHIP_HEIGHT / 2 - SHIELD_PADDING;
 			float shield_down = player.y - SPACESHIP_HEIGHT / 2 + SPACESHIP_HEIGHT - 1 + SHIELD_PADDING;
 
-			//TODO: Collision with square and circle
+			if (shield_up <= asteroid->y && asteroid->y <= shield_down) {
+                if ((asteroid->x + asteroid->radius >= shield_left) && (asteroid->x < shield_left)) {
+					if (asteroid->x_speed > 0) {
+						asteroid->x = shield_left - asteroid->radius - 1;
+						asteroid->x_speed = -asteroid->x_speed;
+					} else {
+						player.x = asteroid->x + asteroid->radius + 1 + SHIELD_PADDING + (SPACESHIP_WIDTH - 1) / 2.0f;
+					}
+                }
+
+				if ((asteroid->x - asteroid->radius <= shield_right) && (asteroid->x > shield_right)) {
+					if (asteroid->x_speed < 0) {
+						asteroid->x = shield_right + asteroid->radius + 1;
+						asteroid->x_speed = -asteroid->x_speed;
+					} else {
+						player.x = asteroid->x - asteroid->radius - 1 - SHIELD_PADDING - (SPACESHIP_WIDTH - 1) / 2.0f;
+					}
+				}
+				continue;
+			}
+			
+			if (shield_left <= asteroid->x && asteroid->x <= shield_right) {
+				if ((asteroid->y + asteroid->radius >= shield_up) && (asteroid->y < shield_up)) {
+					if (asteroid->y_speed > 0) {
+						asteroid->y = shield_up - asteroid->radius - 1;
+						asteroid->y_speed = -asteroid->y_speed;
+					} else {
+						player.y = asteroid->y + asteroid->radius + 1 + SHIELD_PADDING + SPACESHIP_HEIGHT / 2;
+					}
+				}
+
+				if ((asteroid->y - asteroid->radius <= shield_down) && (asteroid->y > shield_down)) {
+					if (asteroid->y_speed < 0) {
+						asteroid->y = shield_down + asteroid->radius + 1;
+						asteroid->y_speed = -asteroid->y_speed;
+					} else {
+						player.y = asteroid->y - asteroid->radius - 1 - SHIELD_PADDING - SPACESHIP_HEIGHT / 2;
+					}
+				}
+				continue;
+			}
+
+			float radius2 = asteroid->radius * asteroid->radius;
+
+			float dx = asteroid->x - shield_left;
+			float dy = asteroid->y - shield_up;
+
+			if (dx * dx + dy * dy <= radius2) {
+				asteroid->x = shield_left - asteroid->radius - 1;
+				asteroid->x_speed = -asteroid->x_speed;
+				asteroid->y_speed = -asteroid->y_speed;
+				continue;
+			}
+
+			dx = asteroid->x - shield_right;
+			dy = asteroid->y - shield_up;
+
+			if (dx * dx + dy * dy <= radius2) {
+				asteroid->x = shield_right + asteroid->radius + 1;
+				asteroid->x_speed = -asteroid->x_speed;
+				asteroid->y_speed = -asteroid->y_speed;
+				continue;
+			}
+
+			dx = asteroid->x - shield_left;
+			dy = asteroid->y - shield_down;
+
+			if (dx * dx + dy * dy <= radius2) {
+				asteroid->x = shield_left - asteroid->radius - 1;
+				asteroid->x_speed = -asteroid->x_speed;
+				asteroid->y_speed = -asteroid->y_speed;
+				continue;
+			}
+
+			dx = asteroid->x - shield_right;
+			dy = asteroid->y - shield_down;
+
+			if (dx * dx + dy * dy <= radius2) {
+				asteroid->x = shield_right + asteroid->radius + 1;
+				asteroid->x_speed = -asteroid->x_speed;
+				asteroid->y_speed = -asteroid->y_speed;
+				continue;
+			}
 		} else {
+			float dx = player.x - asteroid->x;
+			float dy = player.y - asteroid->y;
+
+			float radius_sum = asteroid->radius + PLAYER_COLLISION_RADIUS;
+
+			if (dx * dx + dy * dy > radius_sum * radius_sum) {
+				continue;
+			}
+
 			float distance = hypot(dx, dy);
 			float speed = hypot(asteroid->x_speed, asteroid->y_speed);
 
