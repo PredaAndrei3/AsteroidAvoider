@@ -33,11 +33,11 @@ void asteroid_spawner_init() {
 
 void asteroid_spawner_update(asteroid_t *asteroids, uint8_t *no_asteroids) {
     if (asteroid_spawner.no_updates > 0 && systime_get_ms() - asteroid_spawner.update_ms_reference > UPDATE_MS) {
-        asteroid_spawner.average_waiting_time_ms -= 40;
-        asteroid_spawner.deviation_waiting_time_ms -= 10;
+        asteroid_spawner.average_waiting_time_ms -= 50;
+        asteroid_spawner.deviation_waiting_time_ms -= 15;
 
-        asteroid_spawner.min_speed += 2;
-        asteroid_spawner.max_speed += 5;
+        asteroid_spawner.min_speed += 4;
+        asteroid_spawner.max_speed += 7;
 
         asteroid_spawner.radius7_weight -= 3;
         asteroid_spawner.radius15_weight--;
@@ -93,6 +93,7 @@ void asteroid_spawner_update(asteroid_t *asteroids, uint8_t *no_asteroids) {
 	asteroid->old_y_draw = round(asteroid->y);
 
     asteroid->just_spawned_offscreen = true;
+    asteroid->offscreen_ms_reference = systime_get_ms();
 
     float speed = random_range(asteroid_spawner.min_speed, asteroid_spawner.max_speed);
 
