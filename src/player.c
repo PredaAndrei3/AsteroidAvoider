@@ -13,7 +13,6 @@
 
 player_t player;
 
-#define NO_PIXEL 0x6510 
 #define PLAYER_COLLISION_RADIUS 13
 
 #define POWER_CONSTANT 0.07f
@@ -340,34 +339,36 @@ void player_draw_diff() {
 	ssd1306_drawBitmap16(x_draw, y_draw, 23, 24, (uint8_t*)spaceship_bitmap);
 	ssd1306_setColor(BACKGROUND_COLOR);
 
-	int16_t old_index = 0;
-	int16_t index_offset = 23 * (y_draw - player.old_y_draw) + (x_draw - player.old_x_draw);
+	if (player.old_x_draw < x_draw) {
+		ssd1306_fillRect16(
+			player.old_x_draw,
+			player.old_y_draw,
+			x_draw - 1,
+			player.old_y_draw + SPACESHIP_HEIGHT - 1
+		);
+	} else if (player.old_x_draw > x_draw) {
+		ssd1306_fillRect16(
+			x_draw + SPACESHIP_WIDTH,
+			player.old_y_draw,
+			player.old_x_draw + SPACESHIP_WIDTH - 1,
+			player.old_y_draw + SPACESHIP_HEIGHT - 1
+		);
+	}
 
-	for (int16_t old_y = player.old_y_draw; old_y < player.old_y_draw + SPACESHIP_HEIGHT; old_y++) {
-		for (int16_t old_x = player.old_x_draw; old_x < player.old_x_draw + SPACESHIP_WIDTH; old_x++) {
-			if (pgm_read_word(&spaceship_bitmap[old_index]) == NO_PIXEL) {
-				old_index++;
-				continue;
-			}
-
-			bool intersection = false;
-
-			if (old_x >= x_draw && old_x < x_draw + SPACESHIP_WIDTH
-				&& old_y >= y_draw && old_y < y_draw + SPACESHIP_HEIGHT) {
-				int16_t index = old_index - index_offset;
-
-				if (index >= 0 && index < SPACESHIP_WIDTH * SPACESHIP_HEIGHT
-					&& pgm_read_word(&spaceship_bitmap[index]) != NO_PIXEL) {
-					intersection = true;
-				}
-			}
-
-			if (!intersection) {
-				ssd1306_putPixel16(old_x, old_y);
-			}
-
-			old_index++;
-		}
+	if (player.old_y_draw > y_draw) {
+		ssd1306_fillRect16(
+			player.old_x_draw,
+			y_draw + SPACESHIP_HEIGHT,
+			player.old_x_draw + SPACESHIP_WIDTH - 1,
+			player.old_y_draw + SPACESHIP_HEIGHT - 1
+		);
+	} else if (player.old_y_draw < y_draw) {
+		ssd1306_fillRect16(
+			player.old_x_draw,
+			player.old_y_draw,
+			player.old_x_draw + SPACESHIP_WIDTH - 1,
+			y_draw - 1
+		);
 	}
 
 	player.old_x_draw = x_draw;
