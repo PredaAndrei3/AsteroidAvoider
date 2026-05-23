@@ -54,12 +54,12 @@ uint16_t game_over_music_durations[] = {250, 250, 600};
 
 static void game_reset() {
     buzzer_set_playing(false);
+    ssd1306_fillScreen16(BACKGROUND_COLOR);
 
     player_init();
     ui_bar_manager_init();
     asteroid_spawner_init();
 
-    ssd1306_fillScreen16(BACKGROUND_COLOR);
     player_draw_init();
     ui_bar_draw_init();
 
