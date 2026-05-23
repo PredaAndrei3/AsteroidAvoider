@@ -16,6 +16,9 @@ player_t player;
 #define NO_PIXEL 0x6510 
 #define PLAYER_COLLISION_RADIUS 13
 
+#define POWER_CONSTANT 0.07f
+#define INERTIA_DECAY 0.85f
+
 #define INVINCIBLE_MS 1000
 #define SHIELD_MS 3000
 
@@ -78,12 +81,12 @@ void player_init() {
 }
 
 void player_update_pos(float delta_time) {
-	player.x_speed_inertia *= 0.9f; 
+	player.x_speed_inertia *= INERTIA_DECAY; 
 	if (fabs(player.x_speed_inertia) < 0.1f) {
 		player.x_speed_inertia = 0;
 	}
 
-    player.y_speed_inertia *= 0.9f;
+    player.y_speed_inertia *= INERTIA_DECAY;
 	if (fabs(player.y_speed_inertia) < 0.1f) {
 		player.y_speed_inertia = 0;
 	}
@@ -255,15 +258,22 @@ bool player_handle_collision_asteroids(asteroid_t *asteroids, uint8_t no_asteroi
 			}
 
 			float distance = hypot(dx, dy);
+			if (distance < FLOAT_TOLERANCE) {
+				distance = 1;
+			}
+
 			float speed = hypot(asteroid->x_speed, asteroid->y_speed);
+			if (speed < FLOAT_TOLERANCE) {
+				speed = 1;
+			}
 
 			float dot_product = (dx * asteroid->x_speed + dy * asteroid->y_speed) / (distance * speed);
 			if (dot_product < 0.7f) {
-				dot_product = 0.7f;
+				dot_product = 0.3f;
 			}
 
 			float radius2 = (float)asteroid->radius * (float)asteroid->radius;
-			float power = radius2 * speed * dot_product * 0.05f;
+			float power = POWER_CONSTANT * radius2 * speed * dot_product;
 
 			player.x_speed_inertia = dx / distance * power;
 			player.y_speed_inertia = dy / distance * power;

@@ -70,13 +70,22 @@ void asteroid_handle_asteroid_collision(asteroid_t *asteroid, asteroid_t *astero
         float b = 2 * (dx * vx + dy * vy);
         float c = dx * dx + dy * dy - radius_sum * radius_sum;
 
-        float t = (-b - sqrt(b * b - 4 * a * c)) / (2 * a);
+        if (fabs(a) >= FLOAT_TOLERANCE) {
+            float t;
 
-        asteroid->x += asteroid->x_speed * t;
-        asteroid->y += asteroid->y_speed * t;
+            float delta = b * b - 4 * a * c;
+            if (delta <= 0) { 
+                t = -b / (2 * a);
+            } else {
+                t = (-b - sqrt(b * b - 4 * a * c)) / (2 * a);
+            }
 
-        other_asteroid->x += other_asteroid->x_speed * t;
-        other_asteroid->y += other_asteroid->y_speed * t;
+            asteroid->x += asteroid->x_speed * t;
+            asteroid->y += asteroid->y_speed * t;
+
+            other_asteroid->x += other_asteroid->x_speed * t;
+            other_asteroid->y += other_asteroid->y_speed * t;
+        }
 
         dx = other_asteroid->x - asteroid->x;
         dy = other_asteroid->y - asteroid->y;
@@ -84,7 +93,12 @@ void asteroid_handle_asteroid_collision(asteroid_t *asteroid, asteroid_t *astero
         float radius2 = (float)asteroid->radius * (float)asteroid->radius;
         float other_radius2 = (float)other_asteroid->radius * (float)other_asteroid->radius;
 
-        float constant = 2.0f / ((radius2 + other_radius2) * (dx * dx + dy * dy));
+        float distance2 = dx * dx + dy * dy;
+        if (distance2 <= FLOAT_TOLERANCE) {
+            distance2 = 1;
+        }
+
+        float constant = 2.0f / ((radius2 + other_radius2) * distance2);
         float dot_product = vx * dx + vy * dy;
 
         asteroid->x_speed -= constant * other_radius2 * dot_product * (-dx);
