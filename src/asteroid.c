@@ -53,67 +53,59 @@ void asteroid_update_pos(asteroid_t *asteroid, float delta_time) {
     }
 }
 
-void asteroid_handle_asteroid_collision(asteroid_t *asteroid, asteroid_t *asteroids, uint8_t no_asteroids) {
-    for (uint8_t i = 0; i < no_asteroids; i++) {
-        asteroid_t* other_asteroid = &asteroids[i];
+void asteroid_handle_asteroid_collision(asteroid_t *asteroid, asteroid_t *other_asteroid) {
+    float dx = other_asteroid->x - asteroid->x;
+    float dy = other_asteroid->y - asteroid->y;
 
-        if (asteroid == other_asteroid) {
-            continue;
-        }
+    float radius_sum = asteroid->radius + other_asteroid->radius;
 
-        float dx = other_asteroid->x - asteroid->x;
-        float dy = other_asteroid->y - asteroid->y;
-
-        float radius_sum = asteroid->radius + other_asteroid->radius;
-
-        if (dx * dx + dy * dy > radius_sum * radius_sum) {
-            continue;
-        }
-
-        float vx = other_asteroid->x_speed - asteroid->x_speed;
-        float vy = other_asteroid->y_speed - asteroid->y_speed;
-
-        float a = vx * vx + vy * vy;
-        float b = 2 * (dx * vx + dy * vy);
-        float c = dx * dx + dy * dy - radius_sum * radius_sum;
-
-        if (fabs(a) >= FLOAT_TOLERANCE) {
-            float t;
-
-            float delta = b * b - 4 * a * c;
-            if (delta <= 0) { 
-                t = -b / (2 * a);
-            } else {
-                t = (-b - sqrt(b * b - 4 * a * c)) / (2 * a);
-            }
-
-            asteroid->x += asteroid->x_speed * t;
-            asteroid->y += asteroid->y_speed * t;
-
-            other_asteroid->x += other_asteroid->x_speed * t;
-            other_asteroid->y += other_asteroid->y_speed * t;
-        }
-
-        dx = other_asteroid->x - asteroid->x;
-        dy = other_asteroid->y - asteroid->y;
-
-        float radius2 = (float)asteroid->radius * (float)asteroid->radius;
-        float other_radius2 = (float)other_asteroid->radius * (float)other_asteroid->radius;
-
-        float distance2 = dx * dx + dy * dy;
-        if (distance2 <= FLOAT_TOLERANCE) {
-            distance2 = 1;
-        }
-
-        float constant = 2.0f / ((radius2 + other_radius2) * distance2);
-        float dot_product = vx * dx + vy * dy;
-
-        asteroid->x_speed -= constant * other_radius2 * dot_product * (-dx);
-        asteroid->y_speed -= constant * other_radius2 * dot_product * (-dy);
-
-        other_asteroid->x_speed -= constant * radius2 * dot_product * dx;
-        other_asteroid->y_speed -= constant * radius2 * dot_product * dy;
+    if (dx * dx + dy * dy > radius_sum * radius_sum) {
+        return;
     }
+
+    float vx = other_asteroid->x_speed - asteroid->x_speed;
+    float vy = other_asteroid->y_speed - asteroid->y_speed;
+
+    float a = vx * vx + vy * vy;
+    float b = 2 * (dx * vx + dy * vy);
+    float c = dx * dx + dy * dy - radius_sum * radius_sum;
+
+    if (fabs(a) >= FLOAT_TOLERANCE) {
+        float t;
+
+        float delta = b * b - 4 * a * c;
+        if (delta <= 0) { 
+            t = -b / (2 * a);
+        } else {
+            t = (-b - sqrt(delta)) / (2 * a);
+        }
+
+        asteroid->x += asteroid->x_speed * t;
+        asteroid->y += asteroid->y_speed * t;
+
+        other_asteroid->x += other_asteroid->x_speed * t;
+        other_asteroid->y += other_asteroid->y_speed * t;
+    }
+
+    dx = other_asteroid->x - asteroid->x;
+    dy = other_asteroid->y - asteroid->y;
+
+    float radius2 = (float)asteroid->radius * (float)asteroid->radius;
+    float other_radius2 = (float)other_asteroid->radius * (float)other_asteroid->radius;
+
+    float distance2 = dx * dx + dy * dy;
+    if (distance2 <= FLOAT_TOLERANCE) {
+        distance2 = 1;
+    }
+
+    float constant = 2.0f / ((radius2 + other_radius2) * distance2);
+    float dot_product = vx * dx + vy * dy;
+
+    asteroid->x_speed -= constant * other_radius2 * dot_product * (-dx);
+    asteroid->y_speed -= constant * other_radius2 * dot_product * (-dy);
+
+    other_asteroid->x_speed -= constant * radius2 * dot_product * dx;
+    other_asteroid->y_speed -= constant * radius2 * dot_product * dy;
 }
 
 void asteroid_draw_diff(asteroid_t *asteroid) {

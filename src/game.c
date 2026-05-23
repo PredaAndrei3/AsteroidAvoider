@@ -170,11 +170,24 @@ void game_run() {
         float delta_time = (ms_value - old_ms_value) / 1000.0f;
         old_ms_value = ms_value;
 
+        asteroid_spawner_update(asteroids, &no_asteroids);
+
         player_update_pos(delta_time);
         player_ckeck_update_invincibility();
         player_check_update_shield();
 
         player_handle_collision_boundary();
+
+        for (uint8_t i = 0; i < no_asteroids; i++) {
+            asteroid_update_pos(&asteroids[i], delta_time);
+        }
+
+        for (uint8_t i = 0; i < no_asteroids; i++) {
+            for (uint8_t j = i + i; j < no_asteroids; j++) {
+                asteroid_handle_asteroid_collision(&asteroids[i], &asteroids[j]);
+            }
+        }
+
         bool damaged = player_handle_collision_asteroids(asteroids, no_asteroids);
 
         if (damaged && player.no_lives != 0) {
@@ -185,14 +198,7 @@ void game_run() {
 
             buzzer_ms_reference = systime_get_ms();
         }
-
-        asteroid_spawner_update(asteroids, &no_asteroids);
-
-        for (uint8_t i = 0; i < no_asteroids; i++) {
-            asteroid_update_pos(&asteroids[i], delta_time);
-            asteroid_handle_asteroid_collision(&asteroids[i], asteroids, no_asteroids);
-        }
-
+        
         if (player.invincible) {
             player_draw_invincible();
         } else {

@@ -15,6 +15,6 @@ typedef struct asteroid_t {
 bool asteroid_can_be_destroyed(asteroid_t *asteroid);
 
 void asteroid_update_pos(asteroid_t *asteroid, float delta_time);
-void asteroid_handle_asteroid_collision(asteroid_t* asteroid, asteroid_t* asteroids, uint8_t no_asteroids);
+void asteroid_handle_asteroid_collision(asteroid_t* asteroid, asteroid_t* other_asteroid);
 
 void asteroid_draw_diff(asteroid_t *asteroid);
