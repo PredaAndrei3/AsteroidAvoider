@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <math.h>
 
-#define TOLERANCE 15
+#define SPAWN_PADDING 15
 #define UPDATE_MS 10000
 
 asteroid_spawner_t asteroid_spawner;
@@ -97,7 +97,7 @@ void asteroid_spawner_update(asteroid_t *asteroids, uint8_t *no_asteroids) {
 
     float speed = random_range(asteroid_spawner.min_speed, asteroid_spawner.max_speed);
 
-    int16_t padding = 2 * asteroid->radius + 1 + TOLERANCE;
+    int16_t padding = 2 * asteroid->radius + 1 + SPAWN_PADDING;
 
     int16_t x = random_range(padding, SCREEN_WIDTH - 1 - padding);
     int16_t y = random_range(padding, SCREEN_HEIGHT - 1 - padding);
