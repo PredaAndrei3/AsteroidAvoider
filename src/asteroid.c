@@ -84,7 +84,7 @@ void asteroid_handle_asteroid_collision(asteroid_t *asteroid, asteroid_t *astero
         float radius2 = (float)asteroid->radius * (float)asteroid->radius;
         float other_radius2 = (float)other_asteroid->radius * (float)other_asteroid->radius;
 
-        float constant = 1.8f / ((radius2 + other_radius2) * (dx * dx + dy * dy));
+        float constant = 2.0f / ((radius2 + other_radius2) * (dx * dx + dy * dy));
         float dot_product = vx * dx + vy * dy;
 
         asteroid->x_speed -= constant * other_radius2 * dot_product * (-dx);
