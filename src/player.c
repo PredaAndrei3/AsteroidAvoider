@@ -268,7 +268,7 @@ bool player_handle_collision_asteroids(asteroid_t *asteroids, uint8_t no_asteroi
 
 			float dot_product = (dx * asteroid->x_speed + dy * asteroid->y_speed) / (distance * speed);
 			if (dot_product < 0.7f) {
-				dot_product = 0.3f;
+				dot_product = 0.5f;
 			}
 
 			float radius2 = (float)asteroid->radius * (float)asteroid->radius;
