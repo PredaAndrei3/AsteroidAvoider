@@ -21,9 +21,7 @@ int main() {
     ili9341_240x320_spi_init(RESET_PIN, CS_PIN, DC_PIN);
     ili9341_setRotation(3);
     ssd1306_setMode(LCD_MODE_NORMAL);
-
     ssd1306_setFixedFont(ssd1306xled_font8x16);
-    ssd1306_fillScreen16(BACKGROUND_COLOR);
 
     sei();
 

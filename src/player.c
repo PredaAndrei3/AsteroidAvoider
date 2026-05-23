@@ -107,14 +107,10 @@ void player_ckeck_update_invincibility() {
 void player_check_update_shield() {
 	player.old_shield = player.shield;
 
-	if (player.shield_requested) {
-		player.shield_requested = false;
-
-		if (player.no_shields > 0 && !player.shield) {
-			player.no_shields--;
-			player.shield = true;
-			player.shield_ms_reference = systime_get_ms();
-		}
+	if (joystick_is_sw_pressed() && player.no_shields > 0 && !player.shield) {
+		player.no_shields--;
+		player.shield = true;
+		player.shield_ms_reference = systime_get_ms();
 	}
 
 	if (player.shield && systime_get_ms() - player.shield_ms_reference >= SHIELD_MS) {

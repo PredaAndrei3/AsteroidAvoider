@@ -1,6 +1,9 @@
 #include "joystick.h"
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
+
+#include "systime.h"
 
 #define SW_DDR DDRD
 #define SW_PORT PORTD
@@ -8,6 +11,13 @@
 
 #define MIDDLE_VAL 512
 #define TOLERANCE 50
+
+volatile bool sw_requested;
+bool sw_pressed;
+
+ISR(INT0_vect) {
+    sw_requested = true;
+}
 
 void joystick_init() {
     ADMUX |= (1 << REFS0);
@@ -47,4 +57,29 @@ float joystick_get_y() {
     }
 
     return (raw_value - MIDDLE_VAL) / 5.0f;
+}
+
+void joystick_update_sw_pressed_status() {
+    EIMSK &= ~(1 << INT0);
+
+    sw_pressed = sw_requested;
+    sw_requested = false;
+
+    EIMSK |= (1 << INT0);
+}
+
+bool joystick_is_sw_pressed() {
+    return sw_pressed;
+}
+
+void joystick_disable_sw() {
+    EIMSK &= ~(1 << INT0);
+    EIFR |= (1 << INTF0);
+
+    sw_requested = sw_pressed = false;
+}
+
+void joystick_enable_sw() {
+    EIFR |= (1 << INTF0);
+    EIMSK |= (1 << INT0);
 }

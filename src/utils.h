@@ -9,4 +9,6 @@
 #define SPACESHIP_WIDTH 23
 #define SPACESHIP_HEIGHT 24
 
+#define TEXT_COLOR RGB_COLOR16(255, 255, 255)
+
 int random_range(int a, int b) ;

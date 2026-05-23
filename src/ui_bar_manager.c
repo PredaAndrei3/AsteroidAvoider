@@ -6,7 +6,6 @@
 #include <string.h>
 
 #define UI_BAR_COLOR RGB_COLOR16(0, 0, 0)
-#define TEXT_COLOR RGB_COLOR16(255, 255, 255)
 
 #define NUMBER_INDEX 7
 

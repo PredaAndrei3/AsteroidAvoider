@@ -9,9 +9,7 @@ typedef struct player_t {
     uint8_t no_lives;
     volatile uint8_t no_shields;
     bool invincible, shield, old_shield, display;
-    volatile bool shield_requested;
-    uint32_t invincible_ms_reference;
-    volatile uint32_t shield_ms_reference;
+    uint32_t invincible_ms_reference, shield_ms_reference;
 } player_t;
 
 extern player_t player;
