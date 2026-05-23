@@ -8,8 +8,11 @@
 #include <math.h>
 
 #include "rgb_led.h"
+#include "systime.h"
 
 #define ASTEROID_COLOR RGB_COLOR16(176, 164, 148)
+
+#define OFFSCREEN_MS 80
 
 static const int16_t circle_heights_lookup_radius_7[] PROGMEM = {
     7, 7, 7, 6, 6, 6, 5, 4, 0
@@ -25,6 +28,10 @@ static const int16_t circle_heights_lookup_radius_15[] PROGMEM = {
 
 bool asteroid_can_be_destroyed(asteroid_t *asteroid) {
     if (asteroid->just_spawned_offscreen) {
+        if (systime_get_ms() - asteroid->offscreen_ms_reference > OFFSCREEN_MS) {
+            return true;
+        }
+
         return false;
     }
 

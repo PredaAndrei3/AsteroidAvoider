@@ -9,6 +9,7 @@ typedef struct asteroid_t {
     int8_t radius;
 
     bool just_spawned_offscreen;
+    uint32_t offscreen_ms_reference;
 } asteroid_t;
 
 bool asteroid_can_be_destroyed(asteroid_t *asteroid);
