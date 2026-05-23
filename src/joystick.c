@@ -12,6 +12,8 @@
 #define MIDDLE_VAL 512
 #define TOLERANCE 50
 
+#define ADC_FACTOR 0.2f
+
 volatile bool sw_requested;
 bool sw_pressed;
 
@@ -30,9 +32,7 @@ void joystick_init() {
     EIMSK |= (1 << INT0);
 }
 
-float joystick_get_x() {
-    ADMUX &= ~(0b00011111);
-
+static float get_value() {
     ADCSRA |= (1 << ADSC);
     while (ADCSRA & (1 << ADSC));
 
@@ -41,22 +41,26 @@ float joystick_get_x() {
         raw_value = MIDDLE_VAL;
     }
 
-    return (raw_value - MIDDLE_VAL) / 5.0f;
+    if (raw_value > MIDDLE_VAL) {
+        raw_value -= TOLERANCE;
+    } else if (raw_value < MIDDLE_VAL) {
+        raw_value += TOLERANCE;
+    }
+
+    return (raw_value - MIDDLE_VAL) * ADC_FACTOR;
+}
+
+float joystick_get_x() {
+    ADMUX &= ~(0b00011111);
+
+    return get_value();
 }
 
 float joystick_get_y() {
     ADMUX &= ~(0b00011111);
     ADMUX |= (1 << MUX0);
 
-    ADCSRA |= (1 << ADSC);
-    while (ADCSRA & (1 << ADSC));
-
-    int16_t raw_value = ADC;
-    if (MIDDLE_VAL - TOLERANCE <= raw_value && raw_value <= MIDDLE_VAL + TOLERANCE) {
-        raw_value = MIDDLE_VAL;
-    }
-
-    return (raw_value - MIDDLE_VAL) / 5.0f;
+    return get_value();
 }
 
 void joystick_update_sw_pressed_status() {
